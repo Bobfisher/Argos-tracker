@@ -127,9 +127,9 @@ export class Reporter {
           page_url: event.pageUrl
         };
 
-        // 将properties中的属性解构到formattedEvent顶层
+        // 将properties中的自定义参数存放到custom_properties字段中
         if (event.properties && Object.keys(event.properties).length > 0) {
-          Object.assign(formattedEvent, event.properties);
+          formattedEvent.custom_properties = event.properties;
         }
 
         return formattedEvent;
