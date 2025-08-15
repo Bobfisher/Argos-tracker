@@ -1,5 +1,5 @@
-import { TrackerConfig, TrackEvent } from './types';
 import { ReportMethod } from './constants';
+import { TrackerConfig, TrackEvent } from './types';
 import { safeStringify } from './utils';
 
 /**
@@ -129,7 +129,7 @@ export class Reporter {
 
         // 将properties中的自定义参数存放到custom_properties字段中
         if (event.properties && Object.keys(event.properties).length > 0) {
-          formattedEvent.custom_properties = event.properties;
+          formattedEvent.custom_properties = JSON.stringify(event.properties);
         }
 
         return formattedEvent;
