@@ -1,5 +1,20 @@
 # 更新日志
 
+## [1.1.12] - 2025-01-15
+
+### 移除
+- 完全移除自动API监控功能，包括Fetch和XMLHttpRequest的自动拦截
+- 移除 `autoTrackApi` 配置选项
+- 移除 `trackApiPerformance` 手动追踪方法
+- 移除 `ApiPerformanceProperties` 接口定义
+- 移除 `API_PERFORMANCE` 事件类型
+- 移除所有API监控相关的代码，确保不会影响原生API的正常使用
+
+### 改进
+- 简化代码结构，移除复杂的API拦截逻辑
+- 提高性能，避免对原生API方法的重写和监控开销
+- 降低潜在的兼容性风险和接口访问异常问题
+
 ## [1.1.11] - 2025-01-15
 
 ### 新增
