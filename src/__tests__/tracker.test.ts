@@ -121,7 +121,8 @@ describe('ArgosTracker', () => {
       const requestBody = JSON.parse(callArgs[1].body);
       
       expect(requestBody.events[0].event_name).toBe('page_view');
-      expect(requestBody.events[0].properties.campaign).toBe('summer-sale');
+      const customProperties = JSON.parse(requestBody.events[0].custom_properties);
+      expect(customProperties.campaign).toBe('summer-sale');
     });
 
     it('should track user actions', async () => {
@@ -138,7 +139,8 @@ describe('ArgosTracker', () => {
       const requestBody = JSON.parse(callArgs[1].body);
       
       expect(requestBody.events[0].event_name).toBe(actionName);
-      expect(requestBody.events[0].properties.form_type).toBe('contact');
+      const customProperties = JSON.parse(requestBody.events[0].custom_properties);
+      expect(customProperties.form_type).toBe('contact');
     });
   });
 

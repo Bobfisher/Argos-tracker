@@ -15,7 +15,9 @@ export enum EventType {
   /** 性能事件 */
   PERFORMANCE = 'performance',
   /** 用户行为 */
-  USER_ACTION = 'user_action'
+  USER_ACTION = 'user_action',
+  /** API性能监控 */
+  API_PERFORMANCE = 'api_performance'
 }
 
 /**
@@ -42,6 +44,7 @@ export const DEFAULT_CONFIG = {
   autoTrackPageView: true,
   autoTrackClick: false,
   autoTrackError: true,
+  autoTrackApi: false,
   headers: {
     'Content-Type': 'application/json'
   } as Record<string, string>
