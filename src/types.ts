@@ -28,8 +28,6 @@ export interface TrackerConfig {
   autoTrackClick?: boolean;
   /** 是否自动收集错误事件 */
   autoTrackError?: boolean;
-  /** 是否自动监控API性能 */
-  autoTrackApi?: boolean;
 }
 
 /**
@@ -110,7 +108,7 @@ export interface ClickProperties {
  * 错误事件属性
  */
 export interface ErrorProperties {
-  /** 错误信息 */
+  /** 错误消息 */
   message: string;
   /** 错误堆栈 */
   stack?: string;
@@ -122,26 +120,4 @@ export interface ErrorProperties {
   colno?: number;
   /** 错误类型 */
   errorType: 'javascript' | 'resource' | 'promise';
-}
-
-/**
- * 接口性能事件属性
- */
-export interface ApiPerformanceProperties {
-  /** 请求URL */
-  url: string;
-  /** 请求方法 */
-  method: string;
-  /** 请求耗时(ms) */
-  duration: number;
-  /** 响应状态码 */
-  statusCode?: number;
-  /** 响应大小(bytes) */
-  responseSize?: number;
-  /** 请求大小(bytes) */
-  requestSize?: number;
-  /** 是否成功 */
-  success: boolean;
-  /** 错误信息 */
-  errorMessage?: string;
 }

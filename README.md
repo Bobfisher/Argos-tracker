@@ -9,7 +9,6 @@
 - 🔄 **多种上报策略**: 实时上报、批量上报、页面卸载时上报
 - 💾 **离线缓存**: 网络异常时自动缓存，网络恢复后重新上报
 - 🛡️ **错误监控**: 自动收集JavaScript错误、Promise异常、资源加载错误
-- 🌐 **API性能监控**: 自动监控XMLHttpRequest和Fetch请求的性能数据
 - 📱 **设备信息**: 自动收集设备类型、屏幕分辨率、用户代理等信息
 - 🔧 **TypeScript支持**: 完整的类型定义，提供更好的开发体验
 - 🧪 **完整测试**: 高测试覆盖率，保证代码质量
@@ -101,8 +100,6 @@ interface TrackerConfig {
   autoTrackClick?: boolean;
   /** 是否自动收集错误事件 */
   autoTrackError?: boolean;
-  /** 是否自动监控API性能 */
-  autoTrackApi?: boolean;
 }
 ```
 
@@ -118,7 +115,6 @@ interface TrackerConfig {
   autoTrackPageView: true,
   autoTrackClick: false,
   autoTrackError: true,
-  autoTrackApi: false,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -161,67 +157,6 @@ tracker.trackUserAction('search', {
   query: 'iPhone',
   results_count: 25
 });
-```
-
-#### `trackApiPerformance(apiData)`
-
-手动追踪API性能数据。
-
-```javascript
-tracker.trackApiPerformance({
-  url: 'https://api.example.com/users',
-  method: 'GET',
-  duration: 245,
-  statusCode: 200,
-  responseSize: 1024,
-  requestSize: 256,
-  success: true
-});
-```
-
-### API性能监控
-
-Argos Tracker 支持自动监控API请求性能，包括XMLHttpRequest和Fetch API。
-
-#### 启用自动监控
-
-```javascript
-const tracker = new ArgosTracker({
-  reportUrl: 'https://your-api.com/track',
-  appId: 'your-app-id',
-  autoTrackApi: true // 启用API自动监控
-});
-```
-
-#### 监控数据包含
-
-- **请求URL**: 完整的请求地址
-- **请求方法**: GET、POST、PUT、DELETE等
-- **请求耗时**: 从发起请求到收到响应的时间(毫秒)
-- **响应状态码**: HTTP状态码
-- **响应大小**: 响应数据的字节大小
-- **请求大小**: 请求数据的字节大小
-- **成功状态**: 请求是否成功(2xx状态码)
-- **错误信息**: 失败请求的错误描述
-
-#### 示例数据格式
-
-```javascript
-{
-  eventType: 'api_performance',
-  eventName: 'api_request',
-  properties: {
-    url: 'https://api.example.com/users/123',
-    method: 'GET',
-    duration: 156,
-    statusCode: 200,
-    responseSize: 2048,
-    requestSize: 0,
-    success: true
-  },
-  timestamp: 1640995200000,
-  // ... 其他标准字段
-}
 ```
 
 ### 用户管理

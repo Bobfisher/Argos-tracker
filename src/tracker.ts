@@ -1,4 +1,4 @@
-import { TrackerConfig, TrackEvent, UserInfo, ApiPerformanceProperties } from './types';
+import { TrackerConfig, TrackEvent, UserInfo } from './types';
 import { EventType, ReportMethod, DEFAULT_CONFIG } from './constants';
 import { StorageManager } from './storage';
 import { Reporter } from './reporter';
@@ -23,8 +23,6 @@ export class ArgosTracker {
   private eventQueue: TrackEvent[] = [];
   private batchTimer: number | null = null;
   private isInitialized = false;
-  private originalXHR: typeof XMLHttpRequest | null = null;
-  private originalFetch: typeof fetch | null = null;
 
   constructor(config: TrackerConfig) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -54,11 +52,6 @@ export class ArgosTracker {
       autoTrackClick: this.config.autoTrackClick,
       autoTrackError: this.config.autoTrackError
     });
-
-    // 启动API监控
-    if (this.config.autoTrackApi) {
-      this.setupApiMonitoring();
-    }
 
     // 处理页面卸载时的数据上报
     this.setupBeforeUnload();
@@ -105,17 +98,6 @@ export class ArgosTracker {
       eventType: EventType.USER_ACTION,
       eventName: actionName,
       properties
-    });
-  }
-
-  /**
-   * 手动追踪API性能
-   */
-  trackApiPerformance(apiData: ApiPerformanceProperties): void {
-    this.trackEvent({
-      eventType: EventType.API_PERFORMANCE,
-      eventName: 'api_request',
-      properties: apiData
     });
   }
 
@@ -182,9 +164,6 @@ export class ArgosTracker {
 
     // 上报剩余事件
     this.flush();
-    
-    // 恢复原始API方法
-    this.restoreApiMethods();
     
     this.isInitialized = false;
     this.log('Tracker destroyed');
@@ -355,174 +334,5 @@ export class ArgosTracker {
    */
   renewSession(): string {
     return this.storage.renewSessionId();
-  }
-
-  /**
-   * 设置API监控
-   */
-  private setupApiMonitoring(): void {
-    this.setupXHRMonitoring();
-    this.setupFetchMonitoring();
-  }
-
-  /**
-   * 设置XMLHttpRequest监控
-   */
-  private setupXHRMonitoring(): void {
-    if (typeof XMLHttpRequest === 'undefined') {
-      return;
-    }
-
-    this.originalXHR = XMLHttpRequest;
-    const self = this;
-
-    // 重写XMLHttpRequest
-    (window as any).XMLHttpRequest = function() {
-      const xhr = new self.originalXHR!();
-      const startTime = Date.now();
-      let url = '';
-      let method = '';
-
-      // 保存原始的open和send方法
-      const originalOpen = xhr.open;
-      const originalSend = xhr.send;
-
-      // 重写open方法
-      xhr.open = function(this: XMLHttpRequest, ...args: any[]) {
-        method = args[0] || 'GET';
-        url = args[1] || '';
-        return originalOpen.apply(this, args as any);
-      };
-
-      // 重写send方法
-      xhr.send = function(this: XMLHttpRequest, body?: any) {
-        // 避免监控tracker自己的请求，防止无限递归
-        if (url === self.config.reportUrl) {
-          return originalSend.call(this, body);
-        }
-
-        const requestSize = body ? new Blob([body]).size : 0;
-
-        // 监听状态变化
-        this.addEventListener('readystatechange', function() {
-          if (this.readyState === 4) {
-            const endTime = Date.now();
-            const duration = endTime - startTime;
-            const responseSize = this.responseText ? new Blob([this.responseText]).size : 0;
-
-            const apiEvent: ApiPerformanceProperties = {
-              url,
-              method,
-              duration,
-              statusCode: this.status,
-              responseSize,
-              requestSize,
-              success: this.status >= 200 && this.status < 300,
-              errorMessage: this.status >= 400 ? this.statusText : undefined
-            };
-
-            self.trackEvent({
-              eventType: EventType.API_PERFORMANCE,
-              eventName: 'api_request',
-              properties: apiEvent
-            });
-          }
-        });
-
-        return originalSend.call(this, body);
-      };
-
-      return xhr;
-    };
-  }
-
-  /**
-   * 设置fetch监控
-   */
-  private setupFetchMonitoring(): void {
-    if (typeof fetch === 'undefined') {
-      return;
-    }
-
-    this.originalFetch = fetch;
-    const self = this;
-
-    // 重写fetch
-    (window as any).fetch = function(input: RequestInfo | URL, init?: RequestInit) {
-      const url = typeof input === 'string' ? input : input.toString();
-      
-      // 避免监控tracker自己的请求，防止无限递归
-      if (url === self.config.reportUrl) {
-        return self.originalFetch!(input, init);
-      }
-
-      const startTime = Date.now();
-      const method = init?.method || 'GET';
-      const requestSize = init?.body ? new Blob([init.body as any]).size : 0;
-
-      return self.originalFetch!(input, init)
-        .then((response) => {
-          const endTime = Date.now();
-          const duration = endTime - startTime;
-
-          // 简化响应大小获取，避免clone问题
-          const responseSize = 0; // 在测试环境中使用默认值
-
-          const apiEvent: ApiPerformanceProperties = {
-            url,
-            method,
-            duration,
-            statusCode: response.status,
-            responseSize,
-            requestSize,
-            success: response.ok,
-            errorMessage: !response.ok ? response.statusText : undefined
-          };
-
-          self.trackEvent({
-            eventType: EventType.API_PERFORMANCE,
-            eventName: 'api_request',
-            properties: apiEvent
-          });
-
-          return response;
-        })
-        .catch((error) => {
-          const endTime = Date.now();
-          const duration = endTime - startTime;
-
-          const apiEvent: ApiPerformanceProperties = {
-            url,
-            method,
-            duration,
-            requestSize,
-            success: false,
-            errorMessage: error.message
-          };
-
-          self.trackEvent({
-            eventType: EventType.API_PERFORMANCE,
-            eventName: 'api_request',
-            properties: apiEvent
-          });
-
-          throw error;
-        });
-    };
-  }
-
-  /**
-   * 恢复原始的API方法
-   */
-  private restoreApiMethods(): void {
-    if (this.originalXHR) {
-      (window as any).XMLHttpRequest = this.originalXHR;
-      this.originalXHR = null;
-    }
-
-    if (this.originalFetch) {
-      (window as any).fetch = this.originalFetch;
-      this.originalFetch = null;
-    }
   }
 }
